@@ -139,8 +139,8 @@ async function TuitionsContent({ searchParams }: PageProps) {
             className="rounded-lg border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#D18A45]"
           >
             <option value="">All Modes</option>
-            <option value="online">Online</option>
-            <option value="offline">Offline</option>
+            <option value="Online">Online</option>
+            <option value="Offline">Offline</option>
           </select>
 
           <div className="flex gap-3 sm:col-span-2 lg:col-span-5">
