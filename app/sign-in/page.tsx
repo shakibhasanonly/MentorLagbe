@@ -1,138 +1,190 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
 
 export default function SignInPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('error');
+
+  useEffect(() => {
+    if (!toast) return;
+
+    const timer = setTimeout(() => setToast(''), 3500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!email.trim() || !password) {
+      setToastType('error');
+      setToast('Please enter your email and password.');
+      return;
+    }
+
+    setLoading(true);
+    setToast('');
+
+    try {
+      const { error } = await authClient.signIn.email({
+        email: email.trim(),
+        password,
+        callbackURL: '/',
+      });
+
+      if (error) {
+        setToastType('error');
+        setToast(error.message || 'Invalid email or password.');
+        return;
+      }
+
+      setToastType('success');
+      setToast('Login successful! Welcome to MentorLagbe.');
+
+      setTimeout(() => {
+        router.push('/');
+        router.refresh();
+      }, 1000);
+    } catch {
+      setToastType('error');
+      setToast('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F0F5FA] px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-[#E2EAF1] bg-white p-7 shadow-xl sm:p-10">
-        {/* Logo and Heading */}
-        <div className="mb-8 flex flex-col items-center">
-          <div className="flex items-center gap-1">
-            <Image
-              src="/mentorlagbe-logo.png"
-              alt="MentorLagbe Logo"
-              width={75}
-              height={75}
-              priority
-              className="-mr-4"
-            />
-
-            <span className="text-2xl font-bold text-[#173B57]">
-              MentorLagbe
-            </span>
-          </div>
-
-          <h1 className="mt-6 text-2xl font-bold text-[#263746]">
-            Welcome Back!
-          </h1>
-
-          <p className="mt-2 text-center text-sm text-gray-500">
-            Sign in to continue your learning journey.
-          </p>
+    <main className="flex min-h-screen items-center justify-center bg-[#F0F5FA] px-4 py-12">
+      {toast && (
+        <div
+          role="status"
+          className={`fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-xl px-5 py-3 text-center text-sm font-medium text-white shadow-lg ${
+            toastType === 'success' ? 'bg-green-600' : 'bg-red-600'
+          }`}
+        >
+          {toast}
         </div>
+      )}
 
-        {/* Login Form */}
-        <form className="space-y-5">
-          {/* Email */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-[#263746]">
-              Email Address
-            </label>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#E2EAF1] bg-white shadow-xl">
+        <div className="px-7 pb-9 pt-9 sm:px-10">
+          {/* Logo and Heading */}
+          <div className="mb-8 flex flex-col items-center">
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/mentorlagbe-logo.png"
+                alt="MentorLagbe Logo"
+                width={44}
+                height={44}
+                priority
+                className="h-11 w-11 object-contain"
+              />
 
-            <input
-              type="email"
-              placeholder="Enter your email"
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#173B57] focus:ring-2 focus:ring-[#173B57]/10"
-            />
+              <span className="text-2xl font-bold text-[#173B57]">
+                MentorLagbe
+              </span>
+            </Link>
+
+            <h1 className="mt-7 text-2xl font-bold text-[#263746]">
+              Welcome Back!
+            </h1>
+
+            <p className="mt-2 text-center text-sm text-gray-500">
+              Sign in to continue your learning journey.
+            </p>
           </div>
 
-          {/* Password */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-[#263746]">
-              Password
-            </label>
+          {/* Login Form */}
+          <form onSubmit={handleSignIn} className="space-y-5">
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-2 block text-sm font-semibold text-[#263746]"
+              >
+                Email Address
+              </label>
 
-            <input
-              type="password"
-              placeholder="Enter your password"
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#173B57] focus:ring-2 focus:ring-[#173B57]/10"
-            />
-          </div>
+              <input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#173B57] focus:ring-2 focus:ring-[#173B57]/10"
+              />
+            </div>
 
-          {/* Remember Me and Forgot Password */}
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 text-gray-600">
-              <input type="checkbox" className="h-4 w-4 accent-[#173B57]" />
-              Remember me
-            </label>
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-semibold text-[#263746]"
+              >
+                Password
+              </label>
+
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-sm outline-none transition focus:border-[#173B57] focus:ring-2 focus:ring-[#173B57]/10"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-[#173B57]"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <span className="text-xs text-gray-400">
+                Forgot your password?
+              </span>
+            </div>
 
             <button
-              type="button"
-              className="font-semibold text-[#D18A45] hover:underline"
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-[#173B57] py-3 font-semibold text-white transition hover:bg-[#214D6D] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Forgot Password?
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
-          </div>
+          </form>
 
-          {/* Sign In Button */}
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-[#173B57] py-3 font-semibold text-white transition hover:bg-[#214D6D]"
-          >
-            Sign In
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="my-6 flex items-center gap-4">
-          <div className="h-px flex-1 bg-gray-200"></div>
-          <span className="text-xs text-gray-400">OR CONTINUE WITH</span>
-          <div className="h-px flex-1 bg-gray-200"></div>
+          {/* Registration Link */}
+          <p className="mt-7 text-center text-sm text-gray-600">
+            Don&apos;t have an account?{' '}
+            <Link
+              href="/sign-up"
+              className="font-bold text-[#D18A45] hover:underline"
+            >
+              Create Account
+            </Link>
+          </p>
         </div>
-
-        {/* Google Sign In */}
-        <button
-          type="button"
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 py-3 text-sm font-semibold text-[#263746] transition hover:bg-gray-50"
-        >
-          <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
-            <path
-              fill="#EA4335"
-              d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"
-            />
-            <path
-              fill="#4285F4"
-              d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.7 7.18l7.2 5.59c4.2-3.88 7.54-9.59 7.54-17.24Z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.12.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19Z"
-            />
-            <path
-              fill="#34A853"
-              d="M24 48c6.48 0 11.94-2.13 15.92-6.21l-7.2-5.59c-2 1.35-4.55 2.15-8.72 2.15-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"
-            />
-          </svg>
-          Continue with Google
-        </button>
-
-        {/* Registration Link */}
-        <p className="mt-7 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <Link
-            href="/sign-up"
-            className="font-bold text-[#D18A45] hover:underline"
-          >
-            Create Account
-          </Link>
-        </p>
-
-        {/* Footer */}
-        <p className="mt-8 text-center text-xs text-gray-400">
-          © 2026 MentorLagbe. All rights reserved.
-        </p>
       </div>
     </main>
   );
